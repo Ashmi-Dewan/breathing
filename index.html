@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0f172a">
+    <title>Box Breathing</title>
+    <style>
+        :root {
+            /* Calming deep blue to purple gradient */
+            --bg-start: #0f172a;
+            --bg-end: #2e1065;
+            --glow: #a78bfa;
+            --text-light: #f8fafc;
+        }
+
+        body, html {
+            margin: 0; 
+            padding: 0;
+            width: 100%; 
+            height: 100%;
+            background: linear-gradient(135deg, var(--bg-start), var(--bg-end));
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: var(--text-light);
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            justify-content: center;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            animation: fadeIn 1s ease-in-out;
+            width: 100%; 
+            max-width: 600px; 
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .screen.active { 
+            display: flex; 
+        }
+        
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(10px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+        
+        h1 { 
+            font-weight: 300; 
+            font-size: 2.8rem; 
+            margin-bottom: 10px; 
+            letter-spacing: 2px; 
+            text-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        p { 
+            font-weight: 300; 
+            font-size: 1.1rem; 
+            opacity: 0.85; 
+            margin-bottom: 40px; 
+            line-height: 1.6; 
+        }
+        
+        button {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 16px 45px;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            letter-spacing: 1.5px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .breathing-container {
+            position: relative;
+            width: 280px; 
+            height: 280px;
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+        }
+        
+        .pulse {
+            position: absolute;
+            top: 50%; 
+            left: 50%;
+            width: 140px; 
+            height: 140px;
+            background: radial-gradient(circle, var(--glow) 0%, transparent 70%);
+            border-radius: 50%;
+            opacity: 0.35;
+            transform: translate(-50%, -50%) scale(1);
+            transition: transform 4s ease-in-out;
+            z-index: 0;
+            filter: blur(15px);
+        }
+
+        .box-svg {
+            position: absolute;
+            top: 0; 
+            left: 0;
+            width: 100%; 
+            height: 100%;
+            z-index: 1;
+        }
+
+        .box-path {
+            fill: none;
+            stroke: var(--glow);
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            /* 200x200 box has a perimeter of 800 */
+            stroke-dasharray: 800;
+            stroke-dashoffset: 800;
+            filter: drop-shadow(0 0 12px rgba(167, 139, 250, 0.7));
+        }
+
+        .instruction {
+            position: relative;
+            z-index: 2;
+            font-size: 2.2rem;
+            font-weight: 300;
+            letter-spacing: 6px;
+            margin: 0;
+            text-transform: uppercase;
+            transition: opacity 0.5s ease;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.4);
+        }
+        
+        .completion-msg {
+            font-size: 1.8rem;
+            font-weight: 300;
+            margin-bottom: 25px;
+            color: #d8b4fe;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Welcome Screen -->
+    <div id="start-screen" class="screen active">
+        <h1>Box Breathing</h1>
+        <p>Slow your mind and reset your breath.</p>
+        <button onclick="startBreathing()">Start Breathing</button>
+    </div>
+
+    <!-- Active Breathing App Screen -->
+    <div id="breathing-screen" class="screen">
+        <div class="breathing-container">
+            <div class="pulse" id="pulse-circle"></div>
+            <!-- ViewBox 210x210 allows a 5px padding offset to cleanly fit the stroke-width -->
+            <svg class="box-svg" viewBox="0 0 210 210">
+                <!-- Starts Top-Left, draws Top Edge, Right Edge, Bottom Edge, Left Edge -->
+                <path id="box-path" class="box-path" d="M 5 5 L 205 5 L 205 205 L 5 205 Z"></path>
+            </svg>
+            <h2 id="instruction-text" class="instruction">Ready</h2>
+        </div>
+    </div>
+
+    <!-- Ending Screen -->
+    <div id="complete-screen" class="screen">
+        <h2 class="completion-msg">🌿 Great job.</h2>
+        <p>You completed 5 breathing cycles.<br><br>Take this calm with you through your day.<br>– MindReset</p>
+        <button onclick="resetApp()" style="margin-top: 20px;">Start Again</button>
+    </div>
+
+    <script>
+        let cycleCount = 0;
+        let currentPhase = 0;
+        let timeoutId = null;
+        let audioCtx = null;
+        
+        // DOM Elements
+        const startScreen = document.getElementById('start-screen');
+        const breathScreen = document.getElementById('breathing-screen');
+        const completeScreen = document.getElementById('complete-screen');
+        const text = document.getElementById('instruction-text');
+        const path = document.getElementById('box-path');
+        const pulse = document.getElementById('pulse-circle');
+
+        // Initialize Web Audio API on user interaction to bypass browser autoplay rules
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // Procedural Audio (No external sound files required)
+        function playBell(freq) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            osc.type = 'sine'; // Soft, pure acoustic tone
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            
+            // Envelope shaping for a bell-like "ding" that softly decays
+            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.12, audioCtx.currentTime + 0.1);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 3);
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            osc.start();
+            // Stop processing after decay
+            osc.stop(audioCtx.currentTime + 3.1); 
+        }
+
+        function switchScreen(hide, show) {
+            hide.classList.remove('active');
+            show.classList.add('active');
+        }
+
+        function startBreathing() {
+            initAudio();
+            cycleCount = 0;
+            currentPhase = 0;
+            switchScreen(startScreen, breathScreen);
+            
+            // Set initial steady state before breathing begins
+            text.innerText = "Get Ready";
+            pulse.style.transform = "translate(-50%, -50%) scale(1)";
+            path.style.transition = 'none';
+            path.style.strokeDashoffset = '800';
+            
+            // Pause 2 seconds for the user to settle before cycle 1 starts
+            setTimeout(() => {
+                runTimer();
+            }, 2000);
+        }
+
+        function runTimer() {
+            // End session check
+            if (cycleCount >= 5) {
+                switchScreen(breathScreen, completeScreen);
+                return;
+            }
+
+            if (currentPhase === 0) {
+                // Remove transitions to instantly reset the drawing offset behind the scenes
+                path.style.transition = 'none';
+                path.style.strokeDashoffset = '800';
+                path.style.opacity = '0';
+                
+                // Force layout reflow trick to re-trigger CSS animations
+                void path.offsetWidth; 
+                
+                // Redraw and softly fade the path line back in over the initial drawing
+                path.style.opacity = '1';
+                path.style.transition = 'stroke-dashoffset 4s linear, opacity 0.5s ease-in';
+            } else {
+                // Ensure linear drawing speed
+                path.style.transition = 'stroke-dashoffset 4s linear';
+            }
+
+            // Crossfade text using CSS opacity
+            text.style.opacity = '0';
+            
+            setTimeout(() => {
+                switch (currentPhase) {
+                    case 0:
+                        text.innerText = "Inhale";
+                        pulse.style.transform = "translate(-50%, -50%) scale(1.65)";
+                        path.style.strokeDashoffset = "600"; // Top Edge finishes
+                        playBell(329.63); // E4 Note
+                        break;
+                    case 1:
+                        text.innerText = "Hold";
+                        path.style.strokeDashoffset = "400"; // Right Edge finishes
+                        playBell(392.00); // G4 Note
+                        break;
+                    case 2:
+                        text.innerText = "Exhale";
+                        pulse.style.transform = "translate(-50%, -50%) scale(1)";
+                        path.style.strokeDashoffset = "200"; // Bottom Edge finishes
+                        playBell(261.63); // C4 Note
+                        break;
+                    case 3:
+                        text.innerText = "Hold";
+                        path.style.strokeDashoffset = "0"; // Left Edge finishes (Complete square)
+                        playBell(392.00); // G4 Note
+                        break;
+                }
+                text.style.opacity = '1';
+            }, 250); 
+            // 250ms text transition
+
+            // Progress cyclical logic
+            currentPhase++;
+            if (currentPhase > 3) {
+                currentPhase = 0;
+                cycleCount++; // Mark completion of the full 16s square
+            }
+
+            // Lock step loop every 4 seconds
+            timeoutId = setTimeout(runTimer, 4000);
+        }
+
+        function resetApp() {
+            if (timeoutId) clearTimeout(timeoutId);
+            path.style.transition = 'none';
+            path.style.strokeDashoffset = '800';
+            text.innerText = "Ready";
+            text.style.opacity = '1';
+            pulse.style.transform = "translate(-50%, -50%) scale(1)";
+            switchScreen(completeScreen, startScreen);
+        }
+    </script>
+</body>
+</html>
