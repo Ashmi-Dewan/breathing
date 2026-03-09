@@ -51,11 +51,11 @@
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 150vmin;
-            height: 150vmin;
+            width: 200vmax;
+            height: 200vmax;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(167, 139, 250, 0.2) 0%, transparent 70%);
-            transform: translate(-50%, -50%) scale(0.8);
+            background: radial-gradient(circle, rgba(167, 139, 250, 0.15) 0%, transparent 60%);
+            transform: translate(-50%, -50%) scale(0.6);
             transition: transform 4s ease-in-out, opacity 4s ease-in-out;
             z-index: -1;
             pointer-events: none;
@@ -264,8 +264,8 @@
             // Set initial steady state before breathing begins
             text.innerText = "Get Ready";
             pulse.style.transform = "translate(-50%, -50%) scale(1)";
-            bgPulse.style.transform = "translate(-50%, -50%) scale(0.8)";
-            bgPulse.style.opacity = "0";
+            bgPulse.style.transform = "translate(-50%, -50%) scale(0.6)";
+            bgPulse.style.opacity = "0.2";
             path.style.transition = 'none';
             path.style.strokeDashoffset = '800';
             
@@ -309,8 +309,8 @@
                     case 0:
                         text.innerText = "Inhale";
                         pulse.style.transform = "translate(-50%, -50%) scale(1.65)";
-                        bgPulse.style.transform = "translate(-50%, -50%) scale(1.5)";
-                        bgPulse.style.opacity = "0.6";
+                        bgPulse.style.transform = "translate(-50%, -50%) scale(1.2)";
+                        bgPulse.style.opacity = "1";
                         path.style.strokeDashoffset = "600"; // Top Edge finishes
                         playBell(329.63); // E4 Note
                         break;
@@ -322,7 +322,7 @@
                     case 2:
                         text.innerText = "Exhale";
                         pulse.style.transform = "translate(-50%, -50%) scale(1)";
-                        bgPulse.style.transform = "translate(-50%, -50%) scale(0.8)";
+                        bgPulse.style.transform = "translate(-50%, -50%) scale(0.6)";
                         bgPulse.style.opacity = "0.2";
                         path.style.strokeDashoffset = "200"; // Bottom Edge finishes
                         playBell(261.63); // C4 Note
