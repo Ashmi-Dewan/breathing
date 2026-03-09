@@ -46,6 +46,21 @@
         .screen.active { 
             display: flex; 
         }
+
+        .bg-pulse {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 150vmin;
+            height: 150vmin;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(167, 139, 250, 0.2) 0%, transparent 70%);
+            transform: translate(-50%, -50%) scale(0.8);
+            transition: transform 4s ease-in-out, opacity 4s ease-in-out;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0;
+        }
         
         @keyframes fadeIn { 
             from { opacity: 0; transform: translateY(10px); } 
@@ -159,6 +174,7 @@
     </style>
 </head>
 <body>
+    <div class="bg-pulse" id="bg-pulse"></div>
 
     <!-- Welcome Screen -->
     <div id="start-screen" class="screen active">
@@ -171,7 +187,7 @@
     <div id="breathing-screen" class="screen">
         <div class="breathing-container">
             <div class="pulse" id="pulse-circle"></div>
-            <!-- ViewBox 210x210 allows a 5px padding offset to cleanly fit the stroke-width -->
+            <!-- ViewBox 210x210 allows a 5px offset to cleanly fit the stroke-width -->
             <svg class="box-svg" viewBox="0 0 210 210">
                 <!-- Starts Top-Left, draws Top Edge, Right Edge, Bottom Edge, Left Edge -->
                 <path id="box-path" class="box-path" d="M 5 5 L 205 5 L 205 205 L 5 205 Z"></path>
@@ -200,6 +216,7 @@
         const text = document.getElementById('instruction-text');
         const path = document.getElementById('box-path');
         const pulse = document.getElementById('pulse-circle');
+        const bgPulse = document.getElementById('bg-pulse');
 
         // Initialize Web Audio API on user interaction to bypass browser autoplay rules
         function initAudio() {
@@ -217,7 +234,7 @@
             const osc = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
             
-            osc.type = 'sine'; // Soft, pure acoustic tone
+            osc.type = 'sine'; // Soft, pure tone
             osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
             
             // Envelope shaping for a bell-like "ding" that softly decays
@@ -247,6 +264,8 @@
             // Set initial steady state before breathing begins
             text.innerText = "Get Ready";
             pulse.style.transform = "translate(-50%, -50%) scale(1)";
+            bgPulse.style.transform = "translate(-50%, -50%) scale(0.8)";
+            bgPulse.style.opacity = "0";
             path.style.transition = 'none';
             path.style.strokeDashoffset = '800';
             
@@ -283,11 +302,15 @@
             // Crossfade text using CSS opacity
             text.style.opacity = '0';
             
+            const phase = currentPhase;
+            
             setTimeout(() => {
-                switch (currentPhase) {
+                switch (phase) {
                     case 0:
                         text.innerText = "Inhale";
                         pulse.style.transform = "translate(-50%, -50%) scale(1.65)";
+                        bgPulse.style.transform = "translate(-50%, -50%) scale(1.5)";
+                        bgPulse.style.opacity = "0.6";
                         path.style.strokeDashoffset = "600"; // Top Edge finishes
                         playBell(329.63); // E4 Note
                         break;
@@ -299,6 +322,8 @@
                     case 2:
                         text.innerText = "Exhale";
                         pulse.style.transform = "translate(-50%, -50%) scale(1)";
+                        bgPulse.style.transform = "translate(-50%, -50%) scale(0.8)";
+                        bgPulse.style.opacity = "0.2";
                         path.style.strokeDashoffset = "200"; // Bottom Edge finishes
                         playBell(261.63); // C4 Note
                         break;
@@ -330,6 +355,7 @@
             text.innerText = "Ready";
             text.style.opacity = '1';
             pulse.style.transform = "translate(-50%, -50%) scale(1)";
+            bgPulse.style.opacity = "0";
             switchScreen(completeScreen, startScreen);
         }
     </script>
